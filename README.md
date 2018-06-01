@@ -53,7 +53,7 @@ Simple Tensorflow implementation of ["Self-Attention Generative Adversarial Netw
 * python main.py --phase test --dataset celebA --gan_type hinge
 
 ## Results
-### Paper result
+### ImageNet
 ![result](./assests/result.png)
 
 ### CelebA
