@@ -99,7 +99,7 @@ class SAGAN(object):
                 x = deconv(x, channels=ch // 2, kernel=4, stride=2, sn=self.sn, scope='deconv_'+str(i+1))
                 x = batch_norm(x, is_training, scope='batch_'+str(i))
                 x = relu(x)
-                
+
                 ch = ch // 2
 
             # Self Attention
@@ -179,8 +179,6 @@ class SAGAN(object):
 
         elif self.gan_type == 'wgan-gp' or self.gan_type == 'dragan':
             GP = self.ld * tf.reduce_mean(tf.square(grad_norm - 1.))
-
-
 
         return GP
 
