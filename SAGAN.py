@@ -187,7 +187,6 @@ class SAGAN(object):
     ##################################################################################
 
     def build_model(self):
-
         """ Graph Input """
         # images
         if self.custom_dataset :
@@ -247,7 +246,6 @@ class SAGAN(object):
 
 
     def train(self):
-
         # initialize all variables
         tf.global_variables_initializer().run()
 
