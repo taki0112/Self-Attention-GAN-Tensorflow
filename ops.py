@@ -4,8 +4,9 @@ import tensorflow.contrib as tf_contrib
 
 # Xavier : tf_contrib.layers.xavier_initializer()
 # He : tf_contrib.layers.variance_scaling_initializer()
+# Normal : tf.random_normal_initializer(mean=0.0, stddev=0.02)
 
-weight_init = tf.random_normal_initializer(mean=0.0, stddev=0.02)
+weight_init = tf_contrib.layers.xavier_initializer()
 weight_regularizer = None
 
 

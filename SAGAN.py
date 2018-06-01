@@ -96,7 +96,7 @@ class SAGAN(object):
             x = tf.reshape(x, [-1, 4, 4, ch])
 
             for i in range(self.layer_num):
-                x = deconv(x, channels=ch//2, kernel=4, stride=2, sn=self.sn, scope='deconv_'+str(i+1))
+                x = deconv(x, channels=ch // 2, kernel=4, stride=2, sn=self.sn, scope='deconv_'+str(i+1))
                 x = batch_norm(x, is_training, scope='batch_'+str(i))
                 x = relu(x)
                 ch = ch // 2
@@ -118,16 +118,13 @@ class SAGAN(object):
     def discriminator(self, x, reuse=False):
         with tf.variable_scope("discriminator", reuse=reuse):
             ch = 64
-            for i in range(self.layer_num) :
-                x = conv(x, channels=ch, kernel=3, stride=1, pad=1, sn=self.sn, scope='conv3_' + str(i))
-                x = conv(x, channels=ch, kernel=4, stride=2, pad=1, sn=self.sn, scope='conv4_' + str(i))
+            x = conv(x, channels=ch, kernel=4, stride=2, pad=1, sn=self.sn, scope='conv_0')
+            x = lrelu(x, 0.1)
+            for i in range(1, self.layer_num) :
+                x = conv(x, channels=ch * 2, kernel=4, stride=2, pad=1, sn=self.sn, scope='conv_' + str(i))
                 x = lrelu(x, 0.1)
 
                 ch = ch * 2
-
-            x = conv(x, channels=ch, kernel=3, stride=1, pad=1, sn=self.sn, scope='conv3_' + str(self.layer_num))
-            x = lrelu(x, 0.1)
-
 
             # Self Attention
             x = self.attention(x, ch)
