@@ -243,7 +243,9 @@ class SAGAN(object):
         self.d_sum = tf.summary.scalar("d_loss", self.d_loss)
         self.g_sum = tf.summary.scalar("g_loss", self.g_loss)
 
-
+    ##################################################################################
+    # Train
+    ##################################################################################
 
     def train(self):
         # initialize all variables
@@ -339,22 +341,6 @@ class SAGAN(object):
         # save model for final step
         self.save(self.checkpoint_dir, counter)
 
-    def visualize_results(self, epoch):
-        tot_num_samples = min(self.sample_num, self.batch_size)
-        image_frame_dim = int(np.floor(np.sqrt(tot_num_samples)))
-
-        """ random condition, random noise """
-
-        z_sample = np.random.uniform(-1, 1, size=(self.batch_size, self.z_dim))
-
-        samples = self.sess.run(self.fake_images, feed_dict={self.z: z_sample})
-
-        sample_dir = os.path.join(self.sample_dir, self.model_dir)
-        check_folder(sample_dir)
-
-        save_images(samples[:image_frame_dim * image_frame_dim, :, :, :], [image_frame_dim, image_frame_dim],
-                    sample_dir + '/' + self.model_name + '_epoch%02d' % epoch + '_test_all_classes.png')
-
     @property
     def model_dir(self):
         return "{}_{}_{}_{}_{}_{}_{}".format(
@@ -383,6 +369,22 @@ class SAGAN(object):
         else:
             print(" [*] Failed to find a checkpoint")
             return False, 0
+
+    def visualize_results(self, epoch):
+        tot_num_samples = min(self.sample_num, self.batch_size)
+        image_frame_dim = int(np.floor(np.sqrt(tot_num_samples)))
+
+        """ random condition, random noise """
+
+        z_sample = np.random.uniform(-1, 1, size=(self.batch_size, self.z_dim))
+
+        samples = self.sess.run(self.fake_images, feed_dict={self.z: z_sample})
+
+        sample_dir = os.path.join(self.sample_dir, self.model_dir)
+        check_folder(sample_dir)
+
+        save_images(samples[:image_frame_dim * image_frame_dim, :, :, :], [image_frame_dim, image_frame_dim],
+                    sample_dir + '/' + self.model_name + '_epoch%02d' % epoch + '_test_all_classes.png')
 
     def test(self):
         tf.global_variables_initializer().run()
