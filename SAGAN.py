@@ -101,10 +101,8 @@ class SAGAN(object):
                 x = relu(x)
                 ch = ch // 2
 
-
             # Self Attention
             x = self.attention(x, ch)
-
 
             x = conv(x, channels=self.c_dim, kernel=3, stride=1, pad=1, sn=self.sn, scope='G_logit')
             x = tanh(x)
@@ -128,7 +126,6 @@ class SAGAN(object):
 
             # Self Attention
             x = self.attention(x, ch)
-
 
             x = fully_conneted(x, units=1, sn=self.sn, scope='D_logit')
 
