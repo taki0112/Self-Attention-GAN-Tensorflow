@@ -12,7 +12,6 @@ Simple Tensorflow implementation of ["Self-Attention Generative Adversarial Netw
 
 ### Code
 ```python
-
   f = conv(x, ch // 8, kernel=1, stride=1, scope='f_conv')
   g = conv(x, ch // 8, kernel=1, stride=1, scope='g_conv')
   h = conv(x, ch, kernel=1, stride=1, scope='h_conv')
@@ -28,7 +27,6 @@ Simple Tensorflow implementation of ["Self-Attention Generative Adversarial Netw
   gamma = tf.get_variable("gamma", [1], initializer=tf.constant_initializer(0.0))
 
   x = gamma * o + x
-  
 ```
 ## Usage
 ### dataset
