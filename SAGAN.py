@@ -91,7 +91,7 @@ class SAGAN(object):
 
     def generator(self, z, is_training=True, reuse=False):
         with tf.variable_scope("generator", reuse=reuse):
-            ch = 512
+            ch = 1024
             x = fully_conneted(z, units=4 * 4 * ch, sn=self.sn, scope='dense')
             x = relu(x)
             x = tf.reshape(x, [-1, 4, 4, ch])
@@ -118,7 +118,7 @@ class SAGAN(object):
     def discriminator(self, x, reuse=False):
         with tf.variable_scope("discriminator", reuse=reuse):
             ch = 64
-            x = conv(x, channels=ch, kernel=4, stride=2, pad=1, sn=self.sn, scope='conv_0')
+            x = conv(x, channels=ch, kernel=4, stride=2, pad=1, sn=self.sn, scope='conv')
             x = lrelu(x, 0.2)
 
             for i in range(1, self.layer_num) :
@@ -286,6 +286,7 @@ class SAGAN(object):
                 batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim])
 
                 if self.custom_dataset :
+
                     train_feed_dict = {
                         self.z: batch_z
                     }
