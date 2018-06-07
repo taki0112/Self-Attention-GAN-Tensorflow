@@ -141,7 +141,6 @@ class SAGAN(object):
         # N = h * w
         s = tf.matmul(hw_flatten(g), hw_flatten(f), transpose_b=True) # # [bs, N, N]
 
-
         beta = tf.nn.softmax(s, axis=-1)  # attention map
 
         o = tf.matmul(beta, hw_flatten(h)) # [bs, N, C]
