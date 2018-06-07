@@ -58,7 +58,7 @@ Simple Tensorflow implementation of ["Self-Attention Generative Adversarial Netw
    <img src="./assests/result_.png" width="420">
 </div>
 
-### CelebA
+### CelebA (100K iteration)
 ![celebA](./assests/celebA.png)
 
 ## Author
