@@ -286,7 +286,6 @@ class SAGAN(object):
                 batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim])
 
                 if self.custom_dataset :
-
                     train_feed_dict = {
                         self.z: batch_z
                     }
