@@ -151,8 +151,7 @@ class SAGAN(object):
 
         return x
 
-
-    def gradient_panalty(self, real, fake):
+    def gradient_penalty(self, real, fake):
         if self.gan_type == 'dragan' :
             shape = tf.shape(real)
             eps = tf.random_uniform(shape=shape, minval=0., maxval=1.)
@@ -219,7 +218,7 @@ class SAGAN(object):
         fake_logits = self.discriminator(fake_images, reuse=True)
 
         if self.gan_type.__contains__('wgan') or self.gan_type == 'dragan' :
-            GP = self.gradient_panalty(real=self.inputs, fake=fake_images)
+            GP = self.gradient_penalty(real=self.inputs, fake=fake_images)
         else :
             GP = 0
 
