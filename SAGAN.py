@@ -91,13 +91,15 @@ class SAGAN(object):
 
     def generator(self, z, is_training=True, reuse=False):
         with tf.variable_scope("generator", reuse=reuse):
-            ch = 1024
+            ch = 512
             x = fully_conneted(z, units=4 * 4 * ch, sn=self.sn, scope='dense')
             x = relu(x)
             x = tf.reshape(x, [-1, 4, 4, ch])
 
             for i in range(1, self.layer_num):
-                x = deconv(x, channels=ch // 2, kernel=4, stride=2, sn=self.sn, use_bias=False, scope='deconv_'+str(i+1))
+                x = up_sample(x, scale_factor=2)
+                x = conv(x, channels=ch // 2, kernel=3, stride=1, pad=1, sn=self.sn, use_bias=False, scope='conv_'+str(i))
+                # x = deconv(x, channels=ch // 2, kernel=4, stride=2, sn=self.sn, use_bias=False, scope='deconv_'+str(i))
                 x = batch_norm(x, is_training, scope='batch_'+str(i))
                 x = relu(x)
 
@@ -106,7 +108,9 @@ class SAGAN(object):
             # Self Attention
             x = self.attention(x, ch)
 
-            x = deconv(x, channels=self.c_dim, kernel=4, stride=2, sn=self.sn, scope='G_logit')
+            # x = deconv(x, channels=self.c_dim, kernel=4, stride=2, sn=self.sn, scope='G_logit')
+            x = up_sample(x, scale_factor=2)
+            x = conv(x, channels=self.c_dim, kernel=3, stride=1, pad=1, sn=self.sn, scope='G_logit')
             x = tanh(x)
 
             return x

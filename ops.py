@@ -88,6 +88,15 @@ def hw_flatten(x) :
     return tf.reshape(x, shape=[x.shape[0], -1, x.shape[-1]])
 
 ##################################################################################
+# Sampling
+##################################################################################
+
+def up_sample(x, scale_factor=2):
+    _, h, w, _ = x.get_shape().as_list()
+    new_size = [h * scale_factor, w * scale_factor]
+    return tf.image.resize_nearest_neighbor(x, size=new_size)
+
+##################################################################################
 # Activation function
 ##################################################################################
 
