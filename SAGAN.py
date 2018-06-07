@@ -119,6 +119,7 @@ class SAGAN(object):
             ch = 64
             x = conv(x, channels=ch, kernel=4, stride=2, pad=1, sn=self.sn, scope='conv_0')
             x = lrelu(x, 0.1)
+            
             for i in range(1, self.layer_num) :
                 x = conv(x, channels=ch * 2, kernel=4, stride=2, pad=1, sn=self.sn, scope='conv_' + str(i))
                 x = lrelu(x, 0.1)
