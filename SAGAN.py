@@ -48,7 +48,7 @@ class SAGAN(object):
             self.c_dim = 1
             self.data = load_mnist(size=self.img_size)
 
-        elif self.dataset_name == 'ciar10' :
+        elif self.dataset_name == 'cifar10' :
             self.c_dim = 3
             self.data = load_cifar10(size=self.img_size)
 
