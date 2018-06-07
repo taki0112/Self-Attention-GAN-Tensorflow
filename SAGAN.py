@@ -93,9 +93,10 @@ class SAGAN(object):
         with tf.variable_scope("generator", reuse=reuse):
             ch = 512
             x = fully_conneted(z, units=4 * 4 * ch, sn=self.sn, scope='dense')
+            x = relu(x)
             x = tf.reshape(x, [-1, 4, 4, ch])
 
-            for i in range(self.layer_num):
+            for i in range(1, self.layer_num):
                 x = deconv(x, channels=ch // 2, kernel=4, stride=2, sn=self.sn, use_bias=False, scope='deconv_'+str(i+1))
                 x = batch_norm(x, is_training, scope='batch_'+str(i))
                 x = relu(x)
@@ -105,7 +106,7 @@ class SAGAN(object):
             # Self Attention
             x = self.attention(x, ch)
 
-            x = conv(x, channels=self.c_dim, kernel=3, stride=1, pad=1, sn=self.sn, scope='G_logit')
+            x = deconv(x, channels=self.c_dim, kernel=4, stride=2, sn=self.sn, scope='G_logit')
             x = tanh(x)
 
             return x
@@ -118,11 +119,11 @@ class SAGAN(object):
         with tf.variable_scope("discriminator", reuse=reuse):
             ch = 64
             x = conv(x, channels=ch, kernel=4, stride=2, pad=1, sn=self.sn, scope='conv_0')
-            x = lrelu(x, 0.1)
+            x = lrelu(x, 0.2)
 
             for i in range(1, self.layer_num) :
                 x = conv(x, channels=ch * 2, kernel=4, stride=2, pad=1, sn=self.sn, scope='conv_' + str(i))
-                x = lrelu(x, 0.1)
+                x = lrelu(x, 0.2)
 
                 ch = ch * 2
 
@@ -141,7 +142,6 @@ class SAGAN(object):
         # N = h * w
         s = tf.matmul(hw_flatten(g), hw_flatten(f), transpose_b=True) # # [bs, N, N]
 
-
         beta = tf.nn.softmax(s, axis=-1)  # attention map
 
         o = tf.matmul(beta, hw_flatten(h)) # [bs, N, C]
@@ -152,8 +152,7 @@ class SAGAN(object):
 
         return x
 
-
-    def gradient_panalty(self, real, fake):
+    def gradient_penalty(self, real, fake):
         if self.gan_type == 'dragan' :
             shape = tf.shape(real)
             eps = tf.random_uniform(shape=shape, minval=0., maxval=1.)
@@ -220,7 +219,7 @@ class SAGAN(object):
         fake_logits = self.discriminator(fake_images, reuse=True)
 
         if self.gan_type.__contains__('wgan') or self.gan_type == 'dragan' :
-            GP = self.gradient_panalty(real=self.inputs, fake=fake_images)
+            GP = self.gradient_penalty(real=self.inputs, fake=fake_images)
         else :
             GP = 0
 
