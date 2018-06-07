@@ -54,7 +54,7 @@ Simple Tensorflow implementation of ["Self-Attention Generative Adversarial Netw
 
 ## Results
 ### ImageNet
-<div align="center">
+<div align="">
    <img src="./assests/result_.png" width="420">
 </div>
 
