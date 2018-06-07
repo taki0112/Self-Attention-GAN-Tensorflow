@@ -96,7 +96,7 @@ class SAGAN(object):
             x = tf.reshape(x, [-1, 4, 4, ch])
 
             for i in range(self.layer_num):
-                x = deconv(x, channels=ch // 2, kernel=4, stride=2, sn=self.sn, scope='deconv_'+str(i+1))
+                x = deconv(x, channels=ch // 2, kernel=4, stride=2, sn=self.sn, use_bias=False, scope='deconv_'+str(i+1))
                 x = batch_norm(x, is_training, scope='batch_'+str(i))
                 x = relu(x)
 
@@ -119,7 +119,7 @@ class SAGAN(object):
             ch = 64
             x = conv(x, channels=ch, kernel=4, stride=2, pad=1, sn=self.sn, scope='conv_0')
             x = lrelu(x, 0.1)
-            
+
             for i in range(1, self.layer_num) :
                 x = conv(x, channels=ch * 2, kernel=4, stride=2, pad=1, sn=self.sn, scope='conv_' + str(i))
                 x = lrelu(x, 0.1)
@@ -134,23 +134,24 @@ class SAGAN(object):
             return x
 
     def attention(self, x, ch):
-        f = conv(x, ch // 8, kernel=1, stride=1, sn=self.sn, scope='f_conv')
-        g = conv(x, ch // 8, kernel=1, stride=1, sn=self.sn, scope='g_conv')
-        h = conv(x, ch, kernel=1, stride=1, sn=self.sn, scope='h_conv')
+        f = conv(x, ch // 8, kernel=1, stride=1, sn=self.sn, scope='f_conv') # [bs, h, w, c']
+        g = conv(x, ch // 8, kernel=1, stride=1, sn=self.sn, scope='g_conv') # [bs, h, w, c']
+        h = conv(x, ch, kernel=1, stride=1, sn=self.sn, scope='h_conv') # [bs, h, w, c]
 
-        s = tf.matmul(g, f, transpose_b=True)
-        attention_shape = s.shape
-        s = tf.reshape(s, shape=[attention_shape[0], -1, attention_shape[-1]])  # [bs, N, C]
+        # N = h * w
+        s = tf.matmul(hw_flatten(g), hw_flatten(f), transpose_b=True) # # [bs, N, N]
 
-        beta = tf.nn.softmax(s, axis=1)  # attention map
-        beta = tf.reshape(beta, shape=attention_shape)
-        o = tf.matmul(beta, h)
 
+        beta = tf.nn.softmax(s, axis=-1)  # attention map
+
+        o = tf.matmul(beta, hw_flatten(h)) # [bs, N, C]
         gamma = tf.get_variable("gamma", [1], initializer=tf.constant_initializer(0.0))
 
+        o = tf.reshape(o, shape=x.shape) # [bs, h, w, C]
         x = gamma * o + x
 
         return x
+
 
     def gradient_panalty(self, real, fake):
         if self.gan_type == 'dragan' :
@@ -159,8 +160,10 @@ class SAGAN(object):
             x_mean, x_var = tf.nn.moments(real, axes=[0, 1, 2, 3])
             x_std = tf.sqrt(x_var)  # magnitude of noise decides the size of local region
             noise = 0.5 * x_std * eps  # delta in paper
+
             # Author suggested U[0,1] in original paper, but he admitted it is bug in github
             # (https://github.com/kodalinaveen3/DRAGAN). It should be two-sided.
+
             alpha = tf.random_uniform(shape=[shape[0], 1, 1, 1], minval=-1., maxval=1.)
             interpolated = tf.clip_by_value(real + alpha * noise, -1., 1.)  # x_hat should be in the space of X
 
@@ -174,6 +177,7 @@ class SAGAN(object):
         grad_norm = tf.norm(flatten(grad), axis=1)  # l2 norm
 
         GP = 0
+
         # WGAN - LP
         if self.gan_type == 'wgan-lp':
             GP = self.ld * tf.reduce_mean(tf.square(tf.maximum(0.0, grad_norm - 1.)))
@@ -382,7 +386,7 @@ class SAGAN(object):
         samples = self.sess.run(self.fake_images, feed_dict={self.z: z_sample})
 
         save_images(samples[:image_frame_dim * image_frame_dim, :, :, :], [image_frame_dim, image_frame_dim],
-                    self.sample_dir + '/' + self.model_name + '_epoch%02d' % epoch + '_test_all_classes.png')
+                    self.sample_dir + '/' + self.model_name + '_epoch%02d' % epoch + '_visualize.png')
 
     def test(self):
         tf.global_variables_initializer().run()
@@ -409,4 +413,4 @@ class SAGAN(object):
 
             save_images(samples[:image_frame_dim * image_frame_dim, :, :, :],
                         [image_frame_dim, image_frame_dim],
-                        result_dir + '/' + self.model_name + '_test_all_classes_{}.png'.format(i))
+                        result_dir + '/' + self.model_name + '_test_{}.png'.format(i))

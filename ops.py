@@ -5,10 +5,10 @@ import tensorflow.contrib as tf_contrib
 # Xavier : tf_contrib.layers.xavier_initializer()
 # He : tf_contrib.layers.variance_scaling_initializer()
 # Normal : tf.random_normal_initializer(mean=0.0, stddev=0.02)
+# l2_decay : tf_contrib.layers.l2_regularizer(0.0001)
 
 weight_init = tf_contrib.layers.xavier_initializer()
 weight_regularizer = None
-
 
 ##################################################################################
 # Layer
@@ -84,6 +84,9 @@ def fully_conneted(x, units, use_bias=True, sn=False, scope='fully_0'):
 def flatten(x) :
     return tf.layers.flatten(x)
 
+def hw_flatten(x) :
+    return tf.reshape(x, shape=[x.shape[0], -1, x.shape[-1]])
+
 ##################################################################################
 # Activation function
 ##################################################################################
@@ -144,7 +147,6 @@ def l2_norm(v, eps=1e-12):
 ##################################################################################
 
 def discriminator_loss(loss_func, real, fake):
-    loss = 0
     real_loss = 0
     fake_loss = 0
 
@@ -169,22 +171,20 @@ def discriminator_loss(loss_func, real, fake):
     return loss
 
 def generator_loss(loss_func, fake):
-    loss = 0
     fake_loss = 0
 
-    for i in range(2) :
-        if loss_func.__contains__('wgan') :
-            fake_loss = -tf.reduce_mean(fake)
+    if loss_func.__contains__('wgan') :
+        fake_loss = -tf.reduce_mean(fake)
 
-        if loss_func == 'lsgan' :
-            fake_loss = tf.reduce_mean(tf.squared_difference(fake, 1.0))
+    if loss_func == 'lsgan' :
+        fake_loss = tf.reduce_mean(tf.squared_difference(fake, 1.0))
 
-        if loss_func == 'gan' or loss_func == 'dragan' :
-            fake_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(fake), logits=fake))
+    if loss_func == 'gan' or loss_func == 'dragan' :
+        fake_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(fake), logits=fake))
 
-        if loss_func == 'hinge' :
-            fake_loss = -tf.reduce_mean(fake)
+    if loss_func == 'hinge' :
+        fake_loss = -tf.reduce_mean(fake)
 
-        loss = fake_loss
+    loss = fake_loss
 
     return loss
