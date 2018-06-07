@@ -54,10 +54,12 @@ Simple Tensorflow implementation of ["Self-Attention Generative Adversarial Netw
 
 ## Results
 ### ImageNet
-![result](./assests/result_.png)
+<div align="center">
+   <img src="./assests/result_.png" width="420">
+</div>
 
 ### CelebA
-* Still training
+![celebA](./assests/celebA.png)
 
 ## Author
 Junho Kim
