@@ -380,11 +380,8 @@ class SAGAN(object):
 
         samples = self.sess.run(self.fake_images, feed_dict={self.z: z_sample})
 
-        sample_dir = os.path.join(self.sample_dir, self.model_dir)
-        check_folder(sample_dir)
-
         save_images(samples[:image_frame_dim * image_frame_dim, :, :, :], [image_frame_dim, image_frame_dim],
-                    sample_dir + '/' + self.model_name + '_epoch%02d' % epoch + '_test_all_classes.png')
+                    self.sample_dir + '/' + self.model_name + '_epoch%02d' % epoch + '_test_all_classes.png')
 
     def test(self):
         tf.global_variables_initializer().run()
