@@ -91,6 +91,11 @@ def hw_flatten(x) :
 # Sampling
 ##################################################################################
 
+def global_avg_pooling(x):
+    gap = tf.reduce_mean(x, axis=[1, 2])
+
+    return gap
+
 def up_sample(x, scale_factor=2):
     _, h, w, _ = x.get_shape().as_list()
     new_size = [h * scale_factor, w * scale_factor]
