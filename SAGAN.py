@@ -22,7 +22,7 @@ class SAGAN(object):
         self.img_size = args.img_size
 
         """ Generator """
-        self.layer_num = int(np.log2(self.img_size)) - 2
+        self.layer_num = int(np.log2(self.img_size)) - 3
         self.z_dim = args.z_dim  # dimension of noise-vector
         self.up_sample = args.up_sample
         self.gan_type = args.gan_type
@@ -93,39 +93,51 @@ class SAGAN(object):
 
     def generator(self, z, is_training=True, reuse=False):
         with tf.variable_scope("generator", reuse=reuse):
-            ch = 512
-            x = fully_conneted(z, units=4 * 4 * ch, sn=self.sn, scope='dense')
-            x = tf.reshape(x, [-1, 4, 4, ch])
+            ch = 1024
+            x = deconv(z, channels=ch, kernel=4, stride=1, use_bias=False, sn=self.sn, scope='deconv')
+            x = batch_norm(x, is_training, scope='batch_norm')
+            x = relu(x)
 
             for i in range(self.layer_num // 2):
-                if self.up_sample :
+                if self.up_sample:
                     x = up_sample(x, scale_factor=2)
-                    x = conv(x, channels=ch // 2, kernel=5, stride=1, pad=2, sn=self.sn, use_bias=False, scope='up_conv_'+str(i))
-                else :
-                    x = deconv(x, channels=ch // 2, kernel=4, stride=2, sn=self.sn, use_bias=False, scope='deconv_'+str(i))
+                    x = conv(x, channels=ch // 2, kernel=3, stride=1, pad=1, sn=self.sn, scope='up_conv_' + str(i))
+                    x = batch_norm(x, is_training, scope='batch_norm_' + str(i))
+                    x = relu(x)
 
-                x = batch_norm(x, is_training, scope='batch_'+str(i))
-                x = relu(x)
+                else:
+                    x = deconv(x, channels=ch // 2, kernel=4, stride=2, pad=1, use_bias=False, sn=self.sn, scope='deconv_' + str(i))
+                    x = batch_norm(x, is_training, scope='batch_norm_' + str(i))
+                    x = relu(x)
 
                 ch = ch // 2
 
             # Self Attention
-            x = self.attention(x, ch, scope="attention", reuse=reuse)
+            x = self.attention(x, ch, sn=self.sn, scope="attention", reuse=reuse)
 
             for i in range(self.layer_num // 2, self.layer_num):
-                if self.up_sample :
+                if self.up_sample:
                     x = up_sample(x, scale_factor=2)
-                    x = conv(x, channels=ch // 2, kernel=5, stride=1, pad=2, sn=self.sn, use_bias=False, scope='up_conv_'+str(i))
-                else :
-                    x = deconv(x, channels=ch // 2, kernel=4, stride=2, sn=self.sn, use_bias=False, scope='deconv_'+str(i))
+                    x = conv(x, channels=ch // 2, kernel=3, stride=1, pad=1, sn=self.sn, scope='up_conv_' + str(i))
+                    x = batch_norm(x, is_training, scope='batch_norm_' + str(i))
+                    x = relu(x)
 
-                x = batch_norm(x, is_training, scope='batch_'+str(i))
-                x = relu(x)
+                else:
+                    x = deconv(x, channels=ch // 2, kernel=4, stride=2, pad=1, use_bias=False, sn=self.sn, scope='deconv_' + str(i))
+                    x = batch_norm(x, is_training, scope='batch_norm_' + str(i))
+                    x = relu(x)
 
                 ch = ch // 2
 
-            x = conv(x, channels=self.c_dim, kernel=5, stride=1, pad=2, sn=self.sn, scope='G_logit')
-            x = tanh(x)
+
+            if self.up_sample:
+                x = up_sample(x, scale_factor=2)
+                x = conv(x, channels=self.c_dim, kernel=3, stride=1, pad=1, sn=self.sn, scope='G_conv_logit')
+                x = tanh(x)
+
+            else:
+                x = deconv(x, channels=self.c_dim, kernel=4, stride=2, pad=1, use_bias=False, sn=self.sn, scope='G_deconv_logit')
+                x = tanh(x)
 
             return x
 
@@ -133,36 +145,39 @@ class SAGAN(object):
     # Discriminator
     ##################################################################################
 
-    def discriminator(self, x, reuse=False):
+    def discriminator(self, x, is_training=True, reuse=False):
         with tf.variable_scope("discriminator", reuse=reuse):
             ch = 64
-            x = conv(x, channels=ch, kernel=4, stride=2, pad=1, sn=self.sn, scope='conv')
-            x = lrelu(x, 0.1)
+            x = conv(x, channels=ch, kernel=4, stride=2, pad=1, sn=self.sn, use_bias=False, scope='conv')
+            x = lrelu(x, 0.2)
 
-            for i in range(self.layer_num // 2) :
-                x = conv(x, channels=ch * 2, kernel=4, stride=2, pad=1, sn=self.sn, scope='conv_' + str(i))
-                x = lrelu(x, 0.1)
+            for i in range(self.layer_num // 2):
+                x = conv(x, channels=ch * 2, kernel=4, stride=2, pad=1, sn=self.sn, use_bias=False, scope='conv_' + str(i))
+                x = batch_norm(x, is_training, scope='batch_norm' + str(i))
+                x = lrelu(x, 0.2)
 
                 ch = ch * 2
 
             # Self Attention
-            x = self.attention(x, ch, scope="attention", reuse=reuse)
+            x = self.attention(x, ch, sn=self.sn, scope="attention", reuse=reuse)
 
-            for i in range(self.layer_num // 2, self.layer_num) :
-                x = conv(x, channels=ch * 2, kernel=4, stride=2, pad=1, sn=self.sn, scope='conv_' + str(i))
-                x = lrelu(x, 0.1)
+            for i in range(self.layer_num // 2, self.layer_num):
+                x = conv(x, channels=ch * 2, kernel=4, stride=2, pad=1, sn=self.sn, use_bias=False, scope='conv_' + str(i))
+                x = batch_norm(x, is_training, scope='batch_norm' + str(i))
+                x = lrelu(x, 0.2)
 
                 ch = ch * 2
 
-            x = fully_conneted(x, units=1, sn=self.sn, scope='D_logit')
+
+            x = conv(x, channels=4, stride=1, sn=self.sn, use_bias=False, scope='D_logit')
 
             return x
 
-    def attention(self, x, ch, scope='attention', reuse=False):
+    def attention(self, x, ch, sn=False, scope='attention', reuse=False):
         with tf.variable_scope(scope, reuse=reuse):
-            f = conv(x, ch // 8, kernel=1, stride=1, sn=self.sn, scope='f_conv') # [bs, h, w, c']
-            g = conv(x, ch // 8, kernel=1, stride=1, sn=self.sn, scope='g_conv') # [bs, h, w, c']
-            h = conv(x, ch, kernel=1, stride=1, sn=self.sn, scope='h_conv') # [bs, h, w, c]
+            f = conv(x, ch // 8, kernel=1, stride=1, sn=sn, scope='f_conv') # [bs, h, w, c']
+            g = conv(x, ch // 8, kernel=1, stride=1, sn=sn, scope='g_conv') # [bs, h, w, c']
+            h = conv(x, ch, kernel=1, stride=1, sn=sn, scope='h_conv') # [bs, h, w, c]
 
             # N = h * w
             s = tf.matmul(hw_flatten(g), hw_flatten(f), transpose_b=True) # # [bs, N, N]
@@ -223,7 +238,7 @@ class SAGAN(object):
             inputs = tf.data.Dataset.from_tensor_slices(self.data)
 
             gpu_device = '/gpu:0'
-            inputs = inputs.apply(shuffle_and_repeat(self.dataset_num)).apply(map_and_batch(Image_Data_Class.image_processing, self.batch_size, num_parallel_batches=8, drop_remainder=True)).apply(prefetch_to_device(gpu_device, self.batch_size))
+            inputs = inputs.apply(shuffle_and_repeat(self.dataset_num)).apply(map_and_batch(Image_Data_Class.image_processing, self.batch_size, num_parallel_batches=16, drop_remainder=True)).apply(prefetch_to_device(gpu_device, self.batch_size))
 
             inputs_iterator = inputs.make_one_shot_iterator()
 
@@ -233,7 +248,7 @@ class SAGAN(object):
             self.inputs = tf.placeholder(tf.float32, [self.batch_size, self.img_size, self.img_size, self.c_dim], name='real_images')
 
         # noises
-        self.z = tf.placeholder(tf.float32, [self.batch_size, self.z_dim], name='z')
+        self.z = tf.placeholder(tf.float32, [self.batch_size, 1, 1, self.z_dim], name='z')
 
         """ Loss Function """
         # output of D for real images
@@ -281,7 +296,7 @@ class SAGAN(object):
         tf.global_variables_initializer().run()
 
         # graph inputs for visualize training results
-        self.sample_z = np.random.uniform(-1, 1, size=(self.batch_size , self.z_dim))
+        self.sample_z = np.random.uniform(-1, 1, size=(self.batch_size, 1, 1, self.z_dim))
 
         # saver to save model
         self.saver = tf.train.Saver()
@@ -308,7 +323,7 @@ class SAGAN(object):
         for epoch in range(start_epoch, self.epoch):
             # get batch data
             for idx in range(start_batch_id, self.iteration):
-                batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim])
+                batch_z = np.random.uniform(-1, 1, [self.batch_size, 1, 1, self.z_dim])
 
                 if self.custom_dataset :
 
@@ -372,8 +387,8 @@ class SAGAN(object):
 
     @property
     def model_dir(self):
-        return "{}_{}_{}_{}_{}_{}_{}".format(
-            self.model_name, self.dataset_name, self.gan_type, self.img_size, self.z_dim, self.layer_num, self.sn)
+        return "{}_{}_{}_{}_{}_{}".format(
+            self.model_name, self.dataset_name, self.gan_type, self.img_size, self.z_dim, self.sn)
 
     def save(self, checkpoint_dir, step):
         checkpoint_dir = os.path.join(checkpoint_dir, self.model_dir)
@@ -405,7 +420,7 @@ class SAGAN(object):
 
         """ random condition, random noise """
 
-        z_sample = np.random.uniform(-1, 1, size=(self.batch_size, self.z_dim))
+        z_sample = np.random.uniform(-1, 1, size=(self.batch_size, 1, 1, self.z_dim))
 
         samples = self.sess.run(self.fake_images, feed_dict={self.z: z_sample})
 
@@ -431,7 +446,7 @@ class SAGAN(object):
         """ random condition, random noise """
 
         for i in range(self.test_num) :
-            z_sample = np.random.uniform(-1, 1, size=(self.batch_size, self.z_dim))
+            z_sample = np.random.uniform(-1, 1, size=(self.batch_size, 1, 1, self.z_dim))
 
             samples = self.sess.run(self.fake_images, feed_dict={self.z: z_sample})
 
