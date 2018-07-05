@@ -4,8 +4,9 @@ from utils import *
 from tensorflow.contrib.data import prefetch_to_device, shuffle_and_repeat, map_and_batch
 
 class SAGAN(object):
+
     def __init__(self, sess, args):
-        self.model_name = "SAGAN"     # name for checkpoint
+        self.model_name = "SAGAN"  # name for checkpoint
         self.sess = sess
         self.dataset_name = args.dataset
         self.checkpoint_dir = args.checkpoint_dir
@@ -93,7 +94,7 @@ class SAGAN(object):
     def generator(self, z, is_training=True, reuse=False):
         with tf.variable_scope("generator", reuse=reuse):
             ch = 1024
-            x = deconv(z, channels=ch, kernel=4, stride=1, use_bias=False, sn=self.sn, scope='deconv')
+            x = deconv(z, channels=ch, kernel=4, stride=1, padding='VALID', use_bias=False, sn=self.sn, scope='deconv')
             x = batch_norm(x, is_training, scope='batch_norm')
             x = relu(x)
 
@@ -105,7 +106,7 @@ class SAGAN(object):
                     x = relu(x)
 
                 else:
-                    x = deconv(x, channels=ch // 2, kernel=4, stride=2, pad=1, use_bias=False, sn=self.sn, scope='deconv_' + str(i))
+                    x = deconv(x, channels=ch // 2, kernel=4, stride=2, use_bias=False, sn=self.sn, scope='deconv_' + str(i))
                     x = batch_norm(x, is_training, scope='batch_norm_' + str(i))
                     x = relu(x)
 
@@ -122,7 +123,7 @@ class SAGAN(object):
                     x = relu(x)
 
                 else:
-                    x = deconv(x, channels=ch // 2, kernel=4, stride=2, pad=1, use_bias=False, sn=self.sn, scope='deconv_' + str(i))
+                    x = deconv(x, channels=ch // 2, kernel=4, stride=2, use_bias=False, sn=self.sn, scope='deconv_' + str(i))
                     x = batch_norm(x, is_training, scope='batch_norm_' + str(i))
                     x = relu(x)
 
@@ -135,7 +136,7 @@ class SAGAN(object):
                 x = tanh(x)
 
             else:
-                x = deconv(x, channels=self.c_dim, kernel=4, stride=2, pad=1, use_bias=False, sn=self.sn, scope='G_deconv_logit')
+                x = deconv(x, channels=self.c_dim, kernel=4, stride=2, use_bias=False, sn=self.sn, scope='G_deconv_logit')
                 x = tanh(x)
 
             return x
