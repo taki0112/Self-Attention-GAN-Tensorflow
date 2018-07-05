@@ -4,9 +4,8 @@ from utils import *
 from tensorflow.contrib.data import prefetch_to_device, shuffle_and_repeat, map_and_batch
 
 class SAGAN(object):
-    model_name = "SAGAN"     # name for checkpoint
-
     def __init__(self, sess, args):
+        self.model_name = "SAGAN"     # name for checkpoint
         self.sess = sess
         self.dataset_name = args.dataset
         self.checkpoint_dir = args.checkpoint_dir
