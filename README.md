@@ -6,6 +6,9 @@ Simple Tensorflow implementation of ["Self-Attention Generative Adversarial Netw
 * Tensorflow 1.8
 * Python 3.6
 
+## Related works
+* [BigGAN-Tensorflow](https://github.com/taki0112/BigGAN-Tensorflow)
+
 ## Summary
 ### Framework
 ![framework](./assests/framework.PNG)
@@ -62,6 +65,7 @@ Simple Tensorflow implementation of ["Self-Attention Generative Adversarial Netw
 
 ### CelebA (100K iteration, hinge loss)
 ![celebA](./assests/celebA.png)
+
 
 ## Author
 Junho Kim
